@@ -1,5 +1,6 @@
-openai  # Used with xAI Grok API (OpenAI-compatible endpoint)
-streamlit
-pandas
-loguru
+openai
+flask
+flask-cors
 python-dotenv
+loguru
+pandas

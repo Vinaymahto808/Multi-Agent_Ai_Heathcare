@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: multi-agent-ai-healthcare
+    runtime: python
+    buildCommand: |
+      pip install -r requirements.txt
+      cd frontend && npm install && npm run build
+    startCommand: cd backend && python app.py
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: FLASK_ENV
+        value: production

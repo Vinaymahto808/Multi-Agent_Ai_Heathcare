@@ -4,7 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 from loguru import logger
@@ -12,13 +12,15 @@ from agents import AgentManager
 
 load_dotenv()
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)
 CORS(app)
 
 logger.remove()
 logger.add(sys.stderr, format="{time} | {level} | {message}", level="INFO")
 
 agent_manager = AgentManager(max_retries=2, verbose=True)
+
+FRONTEND_DIST = Path(__file__).resolve().parent.parent / "frontend" / "dist"
 
 
 @app.route("/api/health", methods=["GET"])
@@ -77,6 +79,18 @@ def sanitize():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/")
+@app.route("/<path:path>")
+def serve_frontend(path=""):
+    if FRONTEND_DIST.exists():
+        file_path = FRONTEND_DIST / path
+        if path and file_path.is_file():
+            return send_from_directory(str(FRONTEND_DIST), path)
+        return send_from_directory(str(FRONTEND_DIST), "index.html")
+    return jsonify({"error": "Frontend not built. Run: cd frontend && npm install && npm run build"}), 200
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=True)
+    debug = os.getenv("FLASK_ENV") != "production"
+    app.run(host="0.0.0.0", port=port, debug=debug)
